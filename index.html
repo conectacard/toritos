@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BENEATH - Archivos Seguros & Control Gerencial</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- MANIFEST PARA PWA -->
+    <link rel="manifest" href="manifest.json">
+</head>
+<body class="bg-slate-950 text-slate-100 flex items-center justify-center min-h-screen">
+
+    <!-- Capa Anti-Mirada Indiscreta -->
+    <div id="privacy-curtain" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-6 hidden">
+        <div class="text-center space-y-3">
+            <span class="text-3xl">🔒</span>
+            <h2 class="text-xl font-bold text-emerald-400">PANTALLA PROTEGIDA</h2>
+            <p class="text-xs text-slate-400 max-w-xs">La sesión ha sido ocultada por seguridad visual en oficina.</p>
+            <button onclick="quitarCortinaPrivacidad()" class="px-4 py-2 bg-emerald-600 text-slate-950 font-bold text-xs rounded-lg cursor-pointer hover:bg-emerald-500">
+                Restaurar Pantalla
+            </button>
+        </div>
+    </div>
+
+    <div class="w-full max-w-md p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl relative">
+        
+        <!-- Encabezado de la App -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold tracking-widest text-emerald-400">BENEATH</h1>
+            <p class="text-xs text-slate-400 mt-1">TRANSMITIR &bull; ARCHIVOS EFÍMEROS &bull; AUDITAR</p>
+        </div>
+
+        <!-- Vista de Configuración Inicial (Registro de Nuevos Miembros / Familia) -->
+        <div id="setup-view" class="space-y-4">
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Crear Identidad Local</h2>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">Tu Nombre de Identidad (Usa MORE para Admin)</label>
+                <input type="text" id="input-identity" placeholder="Ej. LUNA o TIGRE" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-emerald-500 uppercase">
+            </div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">Define un PIN de Acceso (4 dígitos)</label>
+                <input type="password" id="input-pin" maxlength="4" placeholder="••••" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 text-center tracking-widest text-xl focus:outline-none focus:border-emerald-500">
+            </div>
+            <button onclick="guardarIdentidad()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg transition-colors cursor-pointer">
+                Iniciar BENEATH y Generar Llaves
+            </button>
+        </div>
+
+        <!-- Vista de Acceso con PIN -->
+        <div id="login-view" class="space-y-4 hidden">
+            <div class="text-center">
+                <p class="text-xs text-slate-400">Identidad activa:</p>
+                <p id="display-identity" class="text-xl font-bold text-emerald-400 uppercase">--</p>
+            </div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">Introduce tu PIN</label>
+                <input type="password" id="login-pin" maxlength="4" placeholder="••••" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 text-center tracking-widest text-xl focus:outline-none focus:border-emerald-500">
+            </div>
+            
+            <div>
+                <button onclick="verificarPin()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg transition-colors cursor-pointer text-xs">
+                    Desbloquear (PIN)
+                </button>
+            </div>
+
+            <div class="text-center pt-2">
+                <button onclick="mostrarSeccionRescate()" class="text-[11px] text-amber-400 hover:underline cursor-pointer">
+                    ¿Olvidaste tu PIN? (Frase de Rescate)
+                </button>
+            </div>
+
+            <div id="recovery-box" class="hidden p-3 bg-slate-950 border border-amber-800/60 rounded-xl space-y-2 text-xs">
+                <p class="text-amber-400 font-bold">Rescate de Cero-Conocimiento</p>
+                <p class="text-slate-400 text-[10px]">Introduce tu frase secreta de emergencia:</p>
+                <input type="text" id="input-recovery-phrase" placeholder="palabra1 palabra2 palabra3 palabra4" class="w-full px-2 py-2 bg-slate-900 border border-slate-700 rounded text-slate-100 text-xs">
+                <button onclick="verificarFraseRescate()" class="w-full py-1.5 bg-amber-600 text-slate-950 font-bold rounded text-xs cursor-pointer">
+                    Restablecer Acceso
+                </button>
+            </div>
+        </div>
+
+        <!-- Vista Principal: Lista de Grupos -->
+        <div id="main-view" class="space-y-4 hidden">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div>
+                    <span id="user-role-badge" class="text-[10px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800 font-semibold uppercase">ROL: --</span>
+                    <h3 id="logged-user" class="text-lg font-bold uppercase text-slate-200 mt-1">--</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="activarCortinaPrivacidad()" class="text-[11px] bg-slate-800 text-amber-400 hover:bg-slate-700 px-2 py-1 rounded border border-slate-700 cursor-pointer" title="Bloqueo Exprés">
+                        👁️ Ocultar
+                    </button>
+                    <button onclick="cerrarSesion()" class="text-[11px] bg-rose-950/60 text-rose-400 hover:bg-rose-900/60 px-2 py-1 rounded border border-rose-900/50 cursor-pointer font-semibold" title="Regresar a pantalla de bloqueo">
+                        🚪 Regresar
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h4 class="text-xs font-semibold text-slate-400 uppercase">Tus Grupos Activos</h4>
+                <div onclick="abrirChatGrupo('TORITOS')" class="p-3 bg-slate-950 hover:bg-slate-800 border border-emerald-500/30 rounded-xl cursor-pointer transition-colors flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-emerald-300">🔵 TORITOS</p>
+                        <p class="text-xs text-slate-400">Canal Seguro Unificado (72h)</p>
+                    </div>
+                    <span class="text-xs bg-emerald-950 text-emerald-400 px-2 py-1 rounded border border-emerald-800">Entrar &rarr;</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista de Chat del Grupo TORITOS -->
+        <div id="chat-view" class="space-y-3 hidden">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <div>
+                    <button onclick="volverAGrupos()" class="text-xs text-emerald-400 hover:underline cursor-pointer">&larr; Volver a Grupos</button>
+                    <h3 class="text-md font-bold text-emerald-300 mt-1">🔵 TORITOS</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-admin-audit" onclick="alternarPanelAuditoria()" class="hidden px-2 py-1 bg-amber-950 text-amber-400 hover:bg-amber-900 text-[10px] font-bold rounded border border-amber-800 cursor-pointer">
+                        📊 Auditoría & Miembros
+                    </button>
+                    <button onclick="activarCortinaPrivacidad()" class="text-[10px] bg-slate-800 text-amber-400 px-2 py-1 rounded border border-slate-700 cursor-pointer" title="Bloqueo Exprés">
+                        👁️ Ocultar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel de Control Gerencial y Expulsión (Exclusivo MORE) -->
+            <div id="audit-panel" class="hidden p-3 bg-amber-950/20 border border-amber-800/50 rounded-xl space-y-2 text-xs">
+                <!-- Se llena dinámicamente desde script.js -->
+            </div>
+
+            <!-- Caja de Mensajes -->
+            <div id="chat-messages" class="h-60 overflow-y-auto space-y-2 p-3 bg-slate-950 rounded-xl border border-slate-800 text-sm">
+                <!-- Los mensajes y archivos se cargan dinámicamente -->
+            </div>
+
+            <!-- Barra de Envío y Selector Real de Archivos -->
+            <div class="space-y-2 pt-2">
+                <div class="flex gap-2">
+                    <input type="text" id="input-mensaje" placeholder="Escribir mensaje o pegar link (Enter)..." class="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                    <button onclick="enviarMensaje()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-xs font-bold rounded-lg transition-colors cursor-pointer">Enviar</button>
+                </div>
+                
+                <!-- Input de archivos oculto vinculado a Base64 -->
+                <input type="file" id="file-selector" class="hidden" onchange="manejarArchivoSeleccionado(event)">
+
+                <div class="flex justify-between items-center bg-slate-950 p-2 rounded-lg border border-slate-800 text-[11px]">
+                    <span class="text-slate-400">📎 Adjuntar Archivo / Foto / PDF (Descargable)</span>
+                    <button onclick="document.getElementById('file-selector').click()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded border border-slate-700 cursor-pointer font-semibold">
+                        Seleccionar Archivo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
