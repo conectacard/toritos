@@ -1,4 +1,4 @@
-// Lógica de BENEATH con Persistencia Local, Acuse de Lectura Gerencial y Control
+// Lógica de BENEATH con Persistencia Local, Acuse de Lectura Gerencial y Control (Versión Toritos)
 
 document.addEventListener("DOMContentLoaded", () => {
     limpiarContenidoExpirado();
@@ -23,7 +23,7 @@ function checarEstadoIdentidad() {
     const identidadGuardada = localStorage.getItem("beneath_identity_toritos");
     
     if (identidadGuardada) {
-        // Verificar si el admin expulsó a este usuario
+        // Verificar si el admin TORITOS expulsó a este usuario
         const expulsados = JSON.parse(localStorage.getItem("beneath_expulsados_toritos")) || [];
         if (expulsados.includes(identidadGuardada)) {
             alert("Tu acceso ha sido revocado por el administrador.");
@@ -94,7 +94,7 @@ function guardarIdentidad() {
     localStorage.setItem("beneath_recovery_toritos", fraseRescate);
 
     // Registrar en la lista general de miembros conocidos de toritos
-    let miembros = JSON.parse(localStorage.getItem("beneath_miembros_toritos")) || ["TORITOS"];
+    let miembros = JSON.parse(localStorage.getItem("beneath_miembros_toritos")) || ["TORITOS", "INTEGRANTE1", "INTEGRANTE2"];
     if (!miembros.includes(nombre)) {
         miembros.push(nombre);
         localStorage.setItem("beneath_miembros_toritos", JSON.stringify(miembros));
@@ -158,8 +158,7 @@ function otorgarAccesoExitoso() {
     const badgeRole = document.getElementById("user-role-badge");
     const btnAudit = document.getElementById("btn-admin-audit");
     
-    // El primer usuario o el administrador de Toritos tendrá el rol gerencial
-    if (usuario === "TORITOS" || usuario === "MORE") {
+    if (usuario === "TORITOS") {
         badgeRole.innerText = "ROL: ADMIN / DIRECTOR";
         badgeRole.className = "text-[10px] bg-amber-950 text-amber-400 px-2 py-0.5 rounded border border-amber-800 font-semibold uppercase";
         if (btnAudit) btnAudit.classList.remove("hidden");
@@ -224,7 +223,7 @@ function alternarPanelAuditoria() {
 // --- PANEL DE CONTROL GERENCIAL Y EXPULSIÓN (EXCLUSIVO TORITOS) ---
 function actualizarPanelGerencialAdmin() {
     const panel = document.getElementById("audit-panel");
-    let miembros = JSON.parse(localStorage.getItem("beneath_miembros_toritos")) || ["TORITOS"];
+    let miembros = JSON.parse(localStorage.getItem("beneath_miembros_toritos")) || ["TORITOS", "INTEGRANTE1", "INTEGRANTE2"];
     let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados_toritos")) || [];
 
     let htmlMiembros = `
@@ -240,7 +239,7 @@ function actualizarPanelGerencialAdmin() {
         let estadoBadge = esExpulsado ? '<span class="text-rose-400 font-semibold">🔴 Expulsado / Revocado</span>' : '<span class="text-emerald-400 font-semibold">🟢 Activo</span>';
         let botonAccion = '';
 
-        if (m !== "TORITOS" && m !== "MORE") {
+        if (m !== "TORITOS") {
             if (esExpulsado) {
                 botonAccion = `<button onclick="readmitirMiembro('${m}')" class="px-2 py-0.5 bg-emerald-950 text-emerald-400 hover:bg-emerald-900 rounded border border-emerald-800 text-[10px] cursor-pointer font-bold">Readmitir</button>`;
             } else {
@@ -277,9 +276,9 @@ function expulsarMiembro(nombreMiembro) {
 }
 
 function readmitirMiembro(nombreMiembro) {
-    let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados")) || [];
+    let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados_toritos")) || [];
     expulsados = expulsados.filter(item => item !== nombreMiembro);
-    localStorage.setItem("beneath_expulsados", JSON.stringify(expulsados));
+    localStorage.setItem("beneath_expulsados_toritos", JSON.stringify(expulsados));
     actualizarPanelGerencialAdmin();
 }
 
@@ -301,7 +300,6 @@ function registrarLecturaUsuarioActual() {
         if (!item.vistos) {
             item.vistos = {};
         }
-        // Si el mensaje fue creado por otro usuario, registrar que este usuario ya lo visualizó
         if (!item.vistos[usuarioActivo]) {
             item.vistos[usuarioActivo] = horaLectura;
             huboCambios = true;
@@ -312,13 +310,12 @@ function registrarLecturaUsuarioActual() {
         localStorage.setItem("beneath_mensajes_toritos_json", JSON.stringify(mensajes));
     }
 }
-// --- SISTEMA DE PERSISTENCIA Y RENDERIZADO BASADO EN JSON ---
 
+// --- SISTEMA DE PERSISTENCIA Y RENDERIZADO BASADO EN JSON ---
 function guardarMensajeEnJSON(nuevoItem) {
     limpiarContenidoExpirado();
     let mensajes = JSON.parse(localStorage.getItem("beneath_mensajes_toritos_json")) || [];
     
-    // Al crearse, el autor ya lo leyó automáticamente
     nuevoItem.vistos = {};
     nuevoItem.vistos[nuevoItem.usuario] = nuevoItem.hora;
 
@@ -363,9 +360,8 @@ function renderizarMensajesDesdeJSON() {
             }
         }
 
-        // Construir bloque de auditoría de lectura visible SÓLO si el usuario es administrador/gerente
         let htmlAuditoriaLectura = "";
-        if (usuarioActual === "TORITOS" || usuarioActual === "MORE") {
+        if (usuarioActual === "TORITOS") {
             let vistosObj = item.vistos || {};
             let listaVistosTextos = [];
             for (let miembro in vistosObj) {
@@ -380,18 +376,6 @@ function renderizarMensajesDesdeJSON() {
                 </div>
             `;
         }
-
-        div.innerHTML = `
-            <div class="flex justify-between items-center text-[10px] text-slate-400 border-b border-slate-800 pb-1">
-                <span class="font-bold text-emerald-400 uppercase">${item.usuario}</span>
-                <span>${item.hora}</span>
-            </div>
-            ${contenidoHtml}
-            ${htmlAuditoriaLectura}
-        `;
-        contenedorChat.appendChild(div);
-    });
-}
 
         div.innerHTML = `
             <div class="flex justify-between items-center">
