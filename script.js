@@ -95,7 +95,7 @@ window.guardarIdentidad = function() {
         return;
     }
 
-    const palabrasBase = ["TORO", "BRAVO", "CLOUD", "SECURE", "MORE", "NODE", "ZENITH", "AUDIT"];
+    const palabrasBase = ["TIGER", "TORO", "CLOUD", "SECURE", "MORE", "NODE", "ZENITH", "AUDIT"];
     let fraseRescate = "";
     for (let i = 0; i < 4; i++) {
         fraseRescate += palabrasBase[Math.floor(Math.random() * palabrasBase.length)] + " ";
@@ -343,26 +343,38 @@ function procesarSnapshotMensajes(snapshot) {
             : "mensaje-card p-2.5 bg-slate-900 rounded-lg border border-slate-800 space-y-1";
 
         let contenidoHtml = "";
-        if (item.esArchivo) {
-            contenidoHtml = `
-                <p class="text-slate-200 text-xs flex items-center justify-between">
-                    <span class="flex items-center gap-1.5 truncate">
-                        <span>${item.icono}</span> 
-                        <span class="font-semibold truncate max-w-[150px]">${item.nombreArchivo}</span>
-                        <span class="text-[10px] text-slate-400">(${item.tamanoLegible})</span>
-                    </span>
-                    <a href="${item.dataUrl}" download="${item.nombreArchivo}" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 rounded font-bold text-[10px] transition-colors flex items-center gap-1 shadow">
-                        📥 Descargar
-                    </a>
-                </p>
-            `;
-        } else {
-            if (item.texto.startsWith("http://") || item.texto.startsWith("https://")) {
-                contenidoHtml = `<a href="${item.texto}" target="_blank" class="text-xs text-blue-400 underline flex items-center gap-1">🔗 <span>${item.texto}</span></a>`;
-            } else {
-                contenidoHtml = `<p class="text-slate-200 text-xs">${item.texto}</p>`;
-            }
-        }
+if (item.esArchivo) {
+    const nombreLimpio = (item.nombreArchivo || '').replace(/'/g, "");
+    
+    // Validamos si es imagen para mostrar la miniatura en pequeño en el chat
+    let vistaMiniatura = '';
+    if (item.tipoMime && item.tipoMime.includes("image")) {
+        vistaMiniatura = `<img src="${item.dataUrl}" alt="${nombreLimpio}" class="w-10 h-10 object-cover rounded border border-emerald-800 shrink-0" />`;
+    } else {
+        vistaMiniatura = `<span class="text-xl shrink-0">${item.icono}</span>`;
+    }
+
+    contenidoHtml = `
+        <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 truncate">
+                ${vistaMiniatura}
+                <div class="truncate">
+                    <p class="font-semibold text-slate-200 truncate max-w-[130px]">${item.nombreArchivo}</p>
+                    <span class="text-[9px] text-slate-400">${item.tamanoLegible}</span>
+                </div>
+            </div>
+            <button type="button" onclick="window.abrirVisorSeguro('${item.dataUrl}', '${nombreLimpio}', '${item.tipoMime || ''}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 rounded font-bold text-[10px] transition-colors flex items-center gap-1 shadow cursor-pointer shrink-0">
+                🔍 Ver Seguro
+            </button>
+        </div>
+    `;
+} else {
+    if (item.texto.startsWith("http://") || item.texto.startsWith("https://")) {
+        contenidoHtml = `<a href="${item.texto}" target="_blank" class="text-xs text-blue-400 underline flex items-center gap-1">🔗 <span>${item.texto}</span></a>`;
+    } else {
+        contenidoHtml = `<p class="text-slate-200 text-xs">${item.texto}</p>`;
+    }
+}
 
         let htmlAuditoriaLectura = "";
         if (usuarioActual === "MORE") {
@@ -453,6 +465,7 @@ window.manejarArchivoSeleccionado = function(event) {
             tamanoLegible: tamanoLegible,
             icono: icono,
             dataUrl: base64Data,
+            tipoMime: archivo.type, // Guardamos el tipo MIME exacto para el visor seguro
             timestamp: Date.now(),
             hora: obtenerHoraActual()
         };
@@ -462,4 +475,50 @@ window.manejarArchivoSeleccionado = function(event) {
     };
 
     lector.readAsDataURL(archivo);
+}
+// Abre el archivo en memoria dentro del modal seguro (sin almacenamiento en disco)
+window.abrirVisorSeguro = function(dataUrl, nombreArchivo, tipoMime) {
+    const modal = document.getElementById("media-viewer-modal");
+    const contenedorContenido = document.getElementById("media-viewer-content");
+    const titulo = document.getElementById("media-viewer-title");
+    
+    if (!modal || !contenedorContenido) return;
+
+    if (titulo) titulo.innerText = nombreArchivo;
+    contenedorContenido.innerHTML = "";
+
+    if (tipoMime && tipoMime.includes("image")) {
+        // Renderizar imagen de manera segura en memoria con restricciones contra descarga y selección
+        contenedorContenido.innerHTML = `
+            <img src="${dataUrl}" alt="${nombreArchivo}" class="max-h-[75vh] max-w-full rounded shadow-lg object-contain mx-auto select-none pointer-events-none" />
+            <p class="text-[10px] text-amber-400 text-center mt-2">🛡️ Modo Zero-Trace Activo: Imagen protegida contra descarga directa.</p>
+        `;
+    } else if (tipoMime && tipoMime.includes("pdf")) {
+        // Renderizar visor de PDF en memoria usando iframe seguro
+        contenedorContenido.innerHTML = `
+            <iframe src="${dataUrl}" class="w-full h-[70vh] rounded border border-slate-700 bg-slate-950" title="${nombreArchivo}"></iframe>
+            <p class="text-[10px] text-amber-400 text-center mt-2">🛡️ Modo Zero-Trace Activo: Visualización de documento restringida a memoria.</p>
+        `;
+    } else {
+        // Para cualquier otro formato de documento compatible
+        contenedorContenido.innerHTML = `
+            <div class="text-center p-6 space-y-3">
+                <p class="text-3xl">📄</p>
+                <p class="text-xs text-slate-300 font-semibold">${nombreArchivo}</p>
+                <p class="text-[11px] text-slate-400">Este formato se visualiza de forma restringida.</p>
+                <iframe src="${dataUrl}" class="w-full h-[50vh] rounded border border-slate-700 bg-slate-950 mt-2"></iframe>
+            </div>
+        `;
+    }
+
+    modal.classList.remove("hidden");
+}
+
+// Cierra y limpia el visor seguro de la memoria
+window.cerrarVisorSeguro = function() {
+    const modal = document.getElementById("media-viewer-modal");
+    const contenedorContenido = document.getElementById("media-viewer-content");
+    
+    if (contenedorContenido) contenedorContenido.innerHTML = "";
+    if (modal) modal.classList.add("hidden");
 }
