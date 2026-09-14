@@ -1,34 +1,47 @@
-// Lógica de BENEATH con Persistencia Local, Acuse de Lectura Gerencial y Control (Versión Toritos)
+// --- LÓGICA DE BENEATH CON NUBE EN TIEMPO REAL (TORITOS) ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+    databaseURL: "https://beneath-toritos-default-rtdb.firebaseio.com/"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const mensajesRef = ref(db, 'mensajes_toritos');
 
 document.addEventListener("DOMContentLoaded", () => {
-    limpiarContenidoExpirado();
+    limpiarContenidoExpiradoNube();
     checarEstadoIdentidad();
     inicializarEventosTecladoGlobales();
 });
 
-// --- MOTOR DE AUTODESTRUCCIÓN A 72 HORAS ---
-function limpiarContenidoExpirado() {
-    const mensajesGuardados = JSON.parse(localStorage.getItem("beneath_mensajes_toritos_json")) || [];
-    const ahora = Date.now();
-    const tiempoLimite = 72 * 60 * 60 * 1000; // 72 horas en milisegundos
+function limpiarContenidoExpiradoNube() {
+    onValue(mensajesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        const ahora = Date.now();
+        const tiempoLimite = 72 * 60 * 60 * 1000;
 
-    const mensajesValidos = mensajesGuardados.filter(item => {
-        return (ahora - item.timestamp) < tiempoLimite;
-    });
-
-    localStorage.setItem("beneath_mensajes_toritos_json", JSON.stringify(mensajesValidos));
+        Object.keys(data).forEach(key => {
+            const item = data[key];
+            if ((ahora - item.timestamp) >= tiempoLimite) {
+                remove(ref(db, `mensajes_toritos/${key}`));
+            }
+        });
+    }, { onlyOnce: true });
 }
 
 function checarEstadoIdentidad() {
-    const identidadGuardada = localStorage.getItem("beneath_identity_toritos");
+    const identidadGuardada = localStorage.getItem("beneath_identity");
     
     if (identidadGuardada) {
-        // Verificar si el admin TORITOS expulsó a este usuario
-        const expulsados = JSON.parse(localStorage.getItem("beneath_expulsados_toritos")) || [];
+        const expulsados = JSON.parse(localStorage.getItem("beneath_expulsados")) || [];
         if (expulsados.includes(identidadGuardada)) {
             alert("Tu acceso ha sido revocado por el administrador.");
-            localStorage.removeItem("beneath_identity_toritos");
-            localStorage.removeItem("beneath_pin_toritos");
+            localStorage.removeItem("beneath_identity");
+            localStorage.removeItem("beneath_pin");
             location.reload();
             return;
         }
@@ -73,7 +86,7 @@ function inicializarEventosTecladoGlobales() {
     if (inputPin) inputPin.addEventListener("keypress", registrarConEnter);
 }
 
-function guardarIdentidad() {
+window.guardarIdentidad = function() {
     const nombre = document.getElementById("input-identity").value.trim().toUpperCase();
     const pin = document.getElementById("input-pin").value.trim();
 
@@ -82,32 +95,30 @@ function guardarIdentidad() {
         return;
     }
 
-    const palabrasBase = ["TIGER", "TORITOS", "CLOUD", "SECURE", "MORE", "NODE", "ZENITH", "AUDIT"];
+    const palabrasBase = ["TORO", "BRAVO", "CLOUD", "SECURE", "MORE", "NODE", "ZENITH", "AUDIT"];
     let fraseRescate = "";
     for (let i = 0; i < 4; i++) {
         fraseRescate += palabrasBase[Math.floor(Math.random() * palabrasBase.length)] + " ";
     }
     fraseRescate = fraseRescate.trim();
 
-    localStorage.setItem("beneath_identity_toritos", nombre);
-    localStorage.setItem("beneath_pin_toritos", pin);
-    localStorage.setItem("beneath_recovery_toritos", fraseRescate);
+    localStorage.setItem("beneath_identity", nombre);
+    localStorage.setItem("beneath_pin", pin);
+    localStorage.setItem("beneath_recovery", fraseRescate);
 
-    // Registrar en la lista general de miembros conocidos de toritos
-    let miembros = JSON.parse(localStorage.getItem("beneath_miembros_toritos")) || ["TORITOS", "INTEGRANTE1", "INTEGRANTE2"];
+    let miembros = JSON.parse(localStorage.getItem("beneath_miembros")) || ["MORE", "LUNA", "TIGRE"];
     if (!miembros.includes(nombre)) {
         miembros.push(nombre);
-        localStorage.setItem("beneath_miembros_toritos", JSON.stringify(miembros));
+        localStorage.setItem("beneath_miembros", JSON.stringify(miembros));
     }
 
     alert(`¡Identidad creada con éxito!\n\n[ FRASE DE RESCATE DE EMERGENCIA ]\nAnota estas 4 palabras:\n\n--> ${fraseRescate} <--`);
-
     location.reload();
 }
 
-function verificarPin() {
+window.verificarPin = function() {
     const pinIngresado = document.getElementById("login-pin").value.trim();
-    const pinReal = localStorage.getItem("beneath_pin_toritos");
+    const pinReal = localStorage.getItem("beneath_pin");
 
     if (pinIngresado === pinReal) {
         otorgarAccesoExitoso();
@@ -117,27 +128,20 @@ function verificarPin() {
     }
 }
 
-function simularBiometria() {
-    const confirmacion = confirm("BENEATH solicita autenticación biométrica (Huella / FaceID). ¿Autorizar?");
-    if (confirmacion) {
-        otorgarAccesoExitoso();
-    }
-}
-
-function mostrarSeccionRescate() {
+window.mostrarSeccionRescate = function() {
     const box = document.getElementById("recovery-box");
     if (box) box.classList.toggle("hidden");
 }
 
-function verificarFraseRescate() {
+window.verificarFraseRescate = function() {
     const fraseIngresada = document.getElementById("input-recovery-phrase").value.trim().toUpperCase();
-    const fraseReal = localStorage.getItem("beneath_recovery_toritos");
+    const fraseReal = localStorage.getItem("beneath_recovery");
 
     if (fraseIngresada === fraseReal) {
         alert("¡Frase verificada! Establece un nuevo PIN.");
         const nuevoPin = prompt("Introduce tu nuevo PIN de 4 dígitos:");
         if (nuevoPin && nuevoPin.length === 4) {
-            localStorage.setItem("beneath_pin_toritos", nuevoPin);
+            localStorage.setItem("beneath_pin", nuevoPin);
             alert("PIN actualizado. Entrando...");
             otorgarAccesoExitoso();
         } else {
@@ -152,13 +156,13 @@ function otorgarAccesoExitoso() {
     document.getElementById("login-view").classList.add("hidden");
     document.getElementById("main-view").classList.remove("hidden");
     
-    const usuario = localStorage.getItem("beneath_identity_toritos");
+    const usuario = localStorage.getItem("beneath_identity");
     document.getElementById("logged-user").innerText = usuario;
 
     const badgeRole = document.getElementById("user-role-badge");
     const btnAudit = document.getElementById("btn-admin-audit");
     
-    if (usuario === "TORITOS") {
+    if (usuario === "MORE") {
         badgeRole.innerText = "ROL: ADMIN / DIRECTOR";
         badgeRole.className = "text-[10px] bg-amber-950 text-amber-400 px-2 py-0.5 rounded border border-amber-800 font-semibold uppercase";
         if (btnAudit) btnAudit.classList.remove("hidden");
@@ -169,26 +173,26 @@ function otorgarAccesoExitoso() {
     }
 }
 
-function activarCortinaPrivacidad() {
+window.activarCortinaPrivacidad = function() {
     const cortina = document.getElementById("privacy-curtain");
     if (cortina) cortina.classList.remove("hidden");
 }
 
-function quitarCortinaPrivacidad() {
+window.quitarCortinaPrivacidad = function() {
     const cortina = document.getElementById("privacy-curtain");
     if (cortina) cortina.classList.add("hidden");
 }
 
-function cerrarSesion() {
+window.cerrarSesion = function() {
     location.reload();
 }
 
-function abrirChatGrupo(nombreGrupo) {
+window.abrirChatGrupo = function(nombreGrupo) {
     document.getElementById("main-view").classList.add("hidden");
     document.getElementById("chat-view").classList.remove("hidden");
     
     registrarLecturaUsuarioActual();
-    renderizarMensajesDesdeJSON();
+    escucharMensajesEnVivo();
 
     const input = document.getElementById("input-mensaje");
     if (input) {
@@ -198,7 +202,7 @@ function abrirChatGrupo(nombreGrupo) {
     }
 }
 
-function volverAGrupos() {
+window.volverAGrupos = function() {
     document.getElementById("chat-view").classList.add("hidden");
     document.getElementById("main-view").classList.remove("hidden");
 }
@@ -210,7 +214,7 @@ function manejarEnterChat(event) {
     }
 }
 
-function alternarPanelAuditoria() {
+window.alternarPanelAuditoria = function() {
     const panel = document.getElementById("audit-panel");
     if (panel) {
         panel.classList.toggle("hidden");
@@ -220,11 +224,10 @@ function alternarPanelAuditoria() {
     }
 }
 
-// --- PANEL DE CONTROL GERENCIAL Y EXPULSIÓN (EXCLUSIVO TORITOS) ---
 function actualizarPanelGerencialAdmin() {
     const panel = document.getElementById("audit-panel");
-    let miembros = JSON.parse(localStorage.getItem("beneath_miembros_toritos")) || ["TORITOS", "INTEGRANTE1", "INTEGRANTE2"];
-    let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados_toritos")) || [];
+    let miembros = JSON.parse(localStorage.getItem("beneath_miembros")) || ["MORE", "LUNA", "TIGRE"];
+    let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados")) || [];
 
     let htmlMiembros = `
         <div class="flex justify-between items-center border-b border-amber-900/40 pb-1 mb-2">
@@ -239,7 +242,7 @@ function actualizarPanelGerencialAdmin() {
         let estadoBadge = esExpulsado ? '<span class="text-rose-400 font-semibold">🔴 Expulsado / Revocado</span>' : '<span class="text-emerald-400 font-semibold">🟢 Activo</span>';
         let botonAccion = '';
 
-        if (m !== "TORITOS") {
+        if (m !== "MORE") {
             if (esExpulsado) {
                 botonAccion = `<button onclick="readmitirMiembro('${m}')" class="px-2 py-0.5 bg-emerald-950 text-emerald-400 hover:bg-emerald-900 rounded border border-emerald-800 text-[10px] cursor-pointer font-bold">Readmitir</button>`;
             } else {
@@ -264,21 +267,21 @@ function actualizarPanelGerencialAdmin() {
     panel.innerHTML = htmlMiembros;
 }
 
-function expulsarMiembro(nombreMiembro) {
+window.expulsarMiembro = function(nombreMiembro) {
     if (confirm(`¿Estás seguro de expulsar a ${nombreMiembro}? Su sesión se cerrará de inmediato y no podrá acceder.`)) {
-        let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados_toritos")) || [];
+        let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados")) || [];
         if (!expulsados.includes(nombreMiembro)) {
             expulsados.push(nombreMiembro);
-            localStorage.setItem("beneath_expulsados_toritos", JSON.stringify(expulsados));
+            localStorage.setItem("beneath_expulsados", JSON.stringify(expulsados));
         }
         actualizarPanelGerencialAdmin();
     }
 }
 
-function readmitirMiembro(nombreMiembro) {
-    let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados_toritos")) || [];
+window.readmitirMiembro = function(nombreMiembro) {
+    let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados")) || [];
     expulsados = expulsados.filter(item => item !== nombreMiembro);
-    localStorage.setItem("beneath_expulsados_toritos", JSON.stringify(expulsados));
+    localStorage.setItem("beneath_expulsados", JSON.stringify(expulsados));
     actualizarPanelGerencialAdmin();
 }
 
@@ -287,52 +290,53 @@ function obtenerHoraActual() {
     return ah.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// --- MOTOR DE ACUSE DE LECTURA GERENCIAL ---
-function registrarLecturaUsuarioActual() {
-    const usuarioActivo = localStorage.getItem("beneath_identity_toritos");
-    if (!usuarioActivo) return;
-
-    let mensajes = JSON.parse(localStorage.getItem("beneath_mensajes_toritos_json")) || [];
-    const horaLectura = obtenerHoraActual();
-    let huboCambios = false;
-
-    mensajes.forEach(item => {
-        if (!item.vistos) {
-            item.vistos = {};
-        }
-        if (!item.vistos[usuarioActivo]) {
-            item.vistos[usuarioActivo] = horaLectura;
-            huboCambios = true;
-        }
+function escucharMensajesEnVivo() {
+    onValue(mensajesRef, (snapshot) => {
+        procesarSnapshotMensajes(snapshot);
     });
-
-    if (huboCambios) {
-        localStorage.setItem("beneath_mensajes_toritos_json", JSON.stringify(mensajes));
-    }
 }
 
-// --- SISTEMA DE PERSISTENCIA Y RENDERIZADO BASADO EN JSON ---
-function guardarMensajeEnJSON(nuevoItem) {
-    limpiarContenidoExpirado();
-    let mensajes = JSON.parse(localStorage.getItem("beneath_mensajes_toritos_json")) || [];
-    
+function registrarLecturaUsuarioActual() {
+    const usuarioActivo = localStorage.getItem("beneath_identity");
+    if (!usuarioActivo) return;
+
+    onValue(mensajesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        const horaLectura = obtenerHoraActual();
+        Object.keys(data).forEach(idMensaje => {
+            let item = data[idMensaje];
+            if (!item.vistos) item.vistos = {};
+            
+            if (!item.vistos[usuarioActivo]) {
+                item.vistos[usuarioActivo] = horaLectura;
+                set(ref(db, `mensajes_toritos/${idMensaje}`), item);
+            }
+        });
+    }, { onlyOnce: true });
+}
+
+function guardarMensajeEnNube(nuevoItem) {
     nuevoItem.vistos = {};
     nuevoItem.vistos[nuevoItem.usuario] = nuevoItem.hora;
 
-    mensajes.push(nuevoItem);
-    localStorage.setItem("beneath_mensajes_toritos_json", JSON.stringify(mensajes));
+    const nuevoMensajeRef = push(mensajesRef);
+    set(nuevoMensajeRef, nuevoItem);
 }
 
-function renderizarMensajesDesdeJSON() {
-    limpiarContenidoExpirado();
+function procesarSnapshotMensajes(snapshot) {
     const contenedorChat = document.getElementById("chat-messages");
     if (!contenedorChat) return;
 
     contenedorChat.innerHTML = "";
-    let mensajes = JSON.parse(localStorage.getItem("beneath_mensajes_toritos_json")) || [];
-    const usuarioActual = localStorage.getItem("beneath_identity_toritos");
+    const data = snapshot.val();
+    if (!data) return;
 
-    mensajes.forEach((item, index) => {
+    const usuarioActual = localStorage.getItem("beneath_identity");
+
+    Object.keys(data).forEach(idMensaje => {
+        const item = data[idMensaje];
         const div = document.createElement("div");
         div.className = item.esArchivo 
             ? "mensaje-card p-2.5 bg-emerald-950/40 rounded-lg border border-emerald-900/50 space-y-1"
@@ -361,7 +365,7 @@ function renderizarMensajesDesdeJSON() {
         }
 
         let htmlAuditoriaLectura = "";
-        if (usuarioActual === "TORITOS") {
+        if (usuarioActual === "MORE") {
             let vistosObj = item.vistos || {};
             let listaVistosTextos = [];
             for (let miembro in vistosObj) {
@@ -382,7 +386,7 @@ function renderizarMensajesDesdeJSON() {
                 <span class="text-[10px] font-bold text-emerald-400 uppercase">${item.usuario}</span>
                 <div class="flex items-center gap-2">
                     <span class="text-[9px] text-slate-500">${item.hora}</span>
-                    <button onclick="eliminarMensajePorIndex(${index})" class="text-[11px] text-rose-400 hover:text-rose-300 cursor-pointer font-bold px-1" title="Eliminar contenido">🗑️</button>
+                    <button onclick="eliminarMensajePorFirebaseId('${idMensaje}')" class="text-[11px] text-rose-400 hover:text-rose-300 cursor-pointer font-bold px-1" title="Eliminar contenido">🗑️</button>
                 </div>
             </div>
             ${contenidoHtml}
@@ -399,17 +403,16 @@ function renderizarMensajesDesdeJSON() {
     contenedorChat.scrollTop = contenedorChat.scrollHeight;
 }
 
-function eliminarMensajePorIndex(index) {
-    let mensajes = JSON.parse(localStorage.getItem("beneath_mensajes_toritos_json")) || [];
-    mensajes.splice(index, 1);
-    localStorage.setItem("beneath_mensajes_toritos_json", JSON.stringify(mensajes));
-    renderizarMensajesDesdeJSON();
+window.eliminarMensajePorFirebaseId = function(idMensaje) {
+    remove(ref(db, `mensajes_toritos/${idMensaje}`));
 }
 
-function enviarMensaje() {
+window.enviarMensaje = function() {
     const input = document.getElementById("input-mensaje");
+    if (!input) return;
+
     let texto = input.value.trim();
-    const usuarioActivo = localStorage.getItem("beneath_identity_toritos") || "TORITOS";
+    const usuarioActivo = localStorage.getItem("beneath_identity") || "MORE";
 
     if (!texto) return;
 
@@ -421,20 +424,19 @@ function enviarMensaje() {
         hora: obtenerHoraActual()
     };
 
-    guardarMensajeEnJSON(nuevoItem);
+    guardarMensajeEnNube(nuevoItem);
     input.value = "";
-    renderizarMensajesDesdeJSON();
+    input.focus();
 }
 
-// --- DESCARGA REAL DE ARCHIVOS (BASE64) ---
-function manejarArchivoSeleccionado(event) {
+window.manejarArchivoSeleccionado = function(event) {
     const archivo = event.target.files[0];
     if (!archivo) return;
 
     const lector = new FileReader();
     lector.onload = function(e) {
         const base64Data = e.target.result;
-        const usuarioActivo = localStorage.getItem("beneath_identity_toritos") || "TORITOS";
+        const usuarioActivo = localStorage.getItem("beneath_identity") || "MORE";
 
         const tamanoKB = (archivo.size / 1024).toFixed(1);
         const tamanoLegible = tamanoKB > 1024 ? (tamanoKB / 1024).toFixed(1) + " MB" : tamanoKB + " KB";
@@ -455,9 +457,8 @@ function manejarArchivoSeleccionado(event) {
             hora: obtenerHoraActual()
         };
 
-        guardarMensajeEnJSON(nuevoItem);
+        guardarMensajeEnNube(nuevoItem);
         event.target.value = "";
-        renderizarMensajesDesdeJSON();
     };
 
     lector.readAsDataURL(archivo);
