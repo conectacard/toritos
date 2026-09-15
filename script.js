@@ -343,46 +343,46 @@ function procesarSnapshotMensajes(snapshot) {
             : "mensaje-card p-2.5 bg-slate-900 rounded-lg border border-slate-800 space-y-1";
 
         let contenidoHtml = "";
-if (item.esArchivo) {
-    const nombreLimpio = (item.nombreArchivo || '').replace(/'/g, "");
-    
-    let vistaMiniatura = '';
-    if (item.tipoMime && item.tipoMime.includes("image")) {
-        vistaMiniatura = `
-            <div class="w-11 h-11 bg-slate-950 rounded border border-emerald-800 overflow-hidden shrink-0 flex items-center justify-center">
-                <img src="${item.dataUrl}" alt="${nombreLimpio}" class="w-full h-full object-cover select-none" />
-            </div>
-        `;
-    } else {
-        vistaMiniatura = `<span class="text-xl shrink-0">${item.icono}</span>`;
-    }
+        if (item.esArchivo) {
+            const nombreLimpio = (item.nombreArchivo || '').replace(/'/g, "");
+            
+            let vistaMiniatura = '';
+            if (item.tipoMime && item.tipoMime.includes("image")) {
+                vistaMiniatura = `
+                    <div class="w-11 h-11 bg-slate-950 rounded border border-emerald-800 overflow-hidden shrink-0 flex items-center justify-center">
+                        <img src="${item.dataUrl}" alt="${nombreLimpio}" class="w-full h-full object-cover select-none" />
+                    </div>
+                `;
+            } else {
+                vistaMiniatura = `<span class="text-xl shrink-0">${item.icono}</span>`;
+            }
 
-    contenidoHtml = `
-        <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 truncate">
-                ${vistaMiniatura}
-                <div class="truncate">
-                    <p class="font-semibold text-slate-200 truncate max-w-[110px]">${item.nombreArchivo}</p>
-                    <span class="text-[9px] text-slate-400">${item.tamanoLegible}</span>
+            contenidoHtml = `
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 truncate">
+                        ${vistaMiniatura}
+                        <div class="truncate">
+                            <p class="font-semibold text-slate-200 truncate max-w-[110px]">${item.nombreArchivo}</p>
+                            <span class="text-[9px] text-slate-400">${item.tamanoLegible}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="window.abrirVisorSeguro('${item.dataUrl}', '${nombreLimpio}', '${item.tipoMime || ''}')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 rounded font-bold text-[10px] transition-colors flex items-center gap-1 shadow cursor-pointer">
+                            🔍 Ver
+                        </button>
+                        <a href="${item.dataUrl}" download="${nombreLimpio}" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded font-bold text-[10px] transition-colors flex items-center gap-1 shadow cursor-pointer border border-emerald-900/50">
+                            💾 Descargar
+                        </a>
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-                <button type="button" onclick="window.abrirVisorSeguro('${item.dataUrl}', '${nombreLimpio}', '${item.tipoMime || ''}')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 rounded font-bold text-[10px] transition-colors flex items-center gap-1 shadow cursor-pointer">
-                    🔍 Ver
-                </button>
-                <a href="${item.dataUrl}" download="${nombreLimpio}" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded font-bold text-[10px] transition-colors flex items-center gap-1 shadow cursor-pointer border border-emerald-900/50">
-                    💾 Descargar
-                </a>
-            </div>
-        </div>
-    `;
-} else {
-    if (item.texto.startsWith("http://") || item.texto.startsWith("https://")) {
-        contenidoHtml = `<a href="${item.texto}" target="_blank" class="text-xs text-blue-400 underline flex items-center gap-1">🔗 <span>${item.texto}</span></a>`;
-    } else {
-        contenidoHtml = `<p class="text-slate-200 text-xs">${item.texto}</p>`;
-    }
-}
+            `;
+        } else {
+            if (item.texto.startsWith("http://") || item.texto.startsWith("https://")) {
+                contenidoHtml = `<a href="${item.texto}" target="_blank" class="text-xs text-blue-400 underline flex items-center gap-1">🔗 <span>${item.texto}</span></a>`;
+            } else {
+                contenidoHtml = `<p class="text-slate-200 text-xs">${item.texto}</p>`;
+            }
+        }
 
         let htmlAuditoriaLectura = "";
         if (usuarioActual === "MORE") {
@@ -424,7 +424,7 @@ if (item.esArchivo) {
 }
 
 window.eliminarMensajePorFirebaseId = function(idMensaje) {
-    remove(ref(db, `mensajes_pesa/${idMensaje}`));
+    remove(ref(db, `mensajes_toritos/${idMensaje}`));
 }
 
 window.enviarMensaje = function() {
