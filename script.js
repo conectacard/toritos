@@ -346,10 +346,13 @@ function procesarSnapshotMensajes(snapshot) {
 if (item.esArchivo) {
     const nombreLimpio = (item.nombreArchivo || '').replace(/'/g, "");
     
-    // Validamos si es imagen para mostrar la miniatura en pequeño en el chat
     let vistaMiniatura = '';
     if (item.tipoMime && item.tipoMime.includes("image")) {
-        vistaMiniatura = `<img src="${item.dataUrl}" alt="${nombreLimpio}" class="w-10 h-10 object-cover rounded border border-emerald-800 shrink-0" />`;
+        vistaMiniatura = `
+            <div class="w-11 h-11 bg-slate-950 rounded border border-emerald-800 overflow-hidden shrink-0 flex items-center justify-center">
+                <img src="${item.dataUrl}" alt="${nombreLimpio}" class="w-full h-full object-cover select-none" />
+            </div>
+        `;
     } else {
         vistaMiniatura = `<span class="text-xl shrink-0">${item.icono}</span>`;
     }
@@ -359,13 +362,18 @@ if (item.esArchivo) {
             <div class="flex items-center gap-2 truncate">
                 ${vistaMiniatura}
                 <div class="truncate">
-                    <p class="font-semibold text-slate-200 truncate max-w-[130px]">${item.nombreArchivo}</p>
+                    <p class="font-semibold text-slate-200 truncate max-w-[110px]">${item.nombreArchivo}</p>
                     <span class="text-[9px] text-slate-400">${item.tamanoLegible}</span>
                 </div>
             </div>
-            <button type="button" onclick="window.abrirVisorSeguro('${item.dataUrl}', '${nombreLimpio}', '${item.tipoMime || ''}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 rounded font-bold text-[10px] transition-colors flex items-center gap-1 shadow cursor-pointer shrink-0">
-                🔍 Ver Seguro
-            </button>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" onclick="window.abrirVisorSeguro('${item.dataUrl}', '${nombreLimpio}', '${item.tipoMime || ''}')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 rounded font-bold text-[10px] transition-colors flex items-center gap-1 shadow cursor-pointer">
+                    🔍 Ver
+                </button>
+                <a href="${item.dataUrl}" download="${nombreLimpio}" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded font-bold text-[10px] transition-colors flex items-center gap-1 shadow cursor-pointer border border-emerald-900/50">
+                    💾 Descargar
+                </a>
+            </div>
         </div>
     `;
 } else {
@@ -416,7 +424,7 @@ if (item.esArchivo) {
 }
 
 window.eliminarMensajePorFirebaseId = function(idMensaje) {
-    remove(ref(db, `mensajes_toritos/${idMensaje}`));
+    remove(ref(db, `mensajes_pesa/${idMensaje}`));
 }
 
 window.enviarMensaje = function() {
