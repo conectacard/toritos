@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BENEATH - Archivos Seguros & Control Gerencial</title>
+    <title>BENEATH - Toritos: Archivos Seguros & Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="style.css">
     
@@ -17,7 +17,7 @@
         <div class="text-center space-y-3">
             <span class="text-3xl">🔒</span>
             <h2 class="text-xl font-bold text-emerald-400">PANTALLA PROTEGIDA</h2>
-            <p class="text-xs text-slate-400 max-w-xs">La sesión ha sido ocultada por seguridad visual en oficina.</p>
+            <p class="text-xs text-slate-400 max-w-xs">La sesión ha sido ocultada por seguridad visual.</p>
             <button onclick="quitarCortinaPrivacidad()" class="px-4 py-2 bg-emerald-600 text-slate-950 font-bold text-xs rounded-lg cursor-pointer hover:bg-emerald-500">
                 Restaurar Pantalla
             </button>
@@ -29,15 +29,15 @@
         <!-- Encabezado de la App -->
         <div class="text-center mb-6">
             <h1 class="text-3xl font-bold tracking-widest text-emerald-400">BENEATH</h1>
-            <p class="text-xs text-slate-400 mt-1">TRANSMITIR &bull; ARCHIVOS EFÍMEROS &bull; AUDITAR</p>
+            <p class="text-xs text-slate-400 mt-1">TORITOS &bull; ARCHIVOS EFÍMEROS &bull; SEGURO</p>
         </div>
 
         <!-- Vista de Configuración Inicial -->
         <div id="setup-view" class="space-y-4">
             <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Crear Identidad Local</h2>
             <div>
-                <label class="block text-xs text-slate-400 mb-1">Tu Nombre de Identidad (Usa MORE para Admin)</label>
-                <input type="text" id="input-identity" placeholder="Ej. LUNA o TIGRE" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-emerald-500 uppercase">
+                <label class="block text-xs text-slate-400 mb-1">Tu Nombre o Apodo en Toritos</label>
+                <input type="text" id="input-identity" placeholder="Ej. TORO o FAMILIA" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-emerald-500 uppercase">
             </div>
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Define un PIN de Acceso (4 dígitos)</label>
@@ -100,9 +100,9 @@
 
             <div class="space-y-2">
                 <h4 class="text-xs font-semibold text-slate-400 uppercase">Tus Grupos Activos</h4>
-                <div onclick="abrirChatGrupo('Toritos')" class="p-3 bg-slate-950 hover:bg-slate-800 border border-emerald-500/30 rounded-xl cursor-pointer transition-colors flex justify-between items-center">
+                <div onclick="abrirChatGrupo('TORITOS')" class="p-3 bg-slate-950 hover:bg-slate-800 border border-emerald-500/30 rounded-xl cursor-pointer transition-colors flex justify-between items-center">
                     <div>
-                        <p class="font-bold text-emerald-300">🐂 Toritos</p>
+                        <p class="font-bold text-emerald-300">🐂 TORITOS</p>
                         <p class="text-xs text-slate-400">Canal Seguro Unificado (72h)</p>
                     </div>
                     <span class="text-xs bg-emerald-950 text-emerald-400 px-2 py-1 rounded border border-emerald-800">Entrar &rarr;</span>
@@ -110,12 +110,12 @@
             </div>
         </div>
 
-        <!-- Vista de Chat del Grupo Toritos -->
+        <!-- Vista de Chat del Grupo TORITOS -->
         <div id="chat-view" class="space-y-3 hidden">
             <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                 <div>
                     <button onclick="volverAGrupos()" class="text-xs text-emerald-400 hover:underline cursor-pointer">&larr; Volver a Grupos</button>
-                    <h3 class="text-md font-bold text-emerald-300 mt-1">🐂 Toritos</h3>
+                    <h3 class="text-md font-bold text-emerald-300 mt-1">🐂 TORITOS</h3>
                 </div>
                 <div class="flex items-center gap-2">
                     <button id="btn-admin-audit" onclick="alternarPanelAuditoria()" class="hidden px-2 py-1 bg-amber-950 text-amber-400 hover:bg-amber-900 text-[10px] font-bold rounded border border-amber-800 cursor-pointer">

@@ -95,7 +95,7 @@ window.guardarIdentidad = function() {
         return;
     }
 
-    const palabrasBase = ["TIGER", "TORO", "CLOUD", "SECURE", "MORE", "NODE", "ZENITH", "AUDIT"];
+    const palabrasBase = ["TORO", "CLOUD", "SECURE", "MORE", "NODE", "ZENITH", "AUDIT", "FAM"];
     let fraseRescate = "";
     for (let i = 0; i < 4; i++) {
         fraseRescate += palabrasBase[Math.floor(Math.random() * palabrasBase.length)] + " ";
@@ -106,7 +106,7 @@ window.guardarIdentidad = function() {
     localStorage.setItem("beneath_pin", pin);
     localStorage.setItem("beneath_recovery", fraseRescate);
 
-    let miembros = JSON.parse(localStorage.getItem("beneath_miembros")) || ["MORE", "LUNA", "TIGRE"];
+    let miembros = JSON.parse(localStorage.getItem("beneath_miembros")) || ["MORE", "TORITO"];
     if (!miembros.includes(nombre)) {
         miembros.push(nombre);
         localStorage.setItem("beneath_miembros", JSON.stringify(miembros));
@@ -226,7 +226,7 @@ window.alternarPanelAuditoria = function() {
 
 function actualizarPanelGerencialAdmin() {
     const panel = document.getElementById("audit-panel");
-    let miembros = JSON.parse(localStorage.getItem("beneath_miembros")) || ["MORE", "LUNA", "TIGRE"];
+    let miembros = JSON.parse(localStorage.getItem("beneath_miembros")) || ["MORE", "TORITO"];
     let expulsados = JSON.parse(localStorage.getItem("beneath_expulsados")) || [];
 
     let htmlMiembros = `
@@ -473,7 +473,7 @@ window.manejarArchivoSeleccionado = function(event) {
             tamanoLegible: tamanoLegible,
             icono: icono,
             dataUrl: base64Data,
-            tipoMime: archivo.type, // Guardamos el tipo MIME exacto para el visor seguro
+            tipoMime: archivo.type,
             timestamp: Date.now(),
             hora: obtenerHoraActual()
         };
@@ -484,7 +484,7 @@ window.manejarArchivoSeleccionado = function(event) {
 
     lector.readAsDataURL(archivo);
 }
-// Abre el archivo en memoria dentro del modal seguro (sin almacenamiento en disco)
+
 window.abrirVisorSeguro = function(dataUrl, nombreArchivo, tipoMime) {
     const modal = document.getElementById("media-viewer-modal");
     const contenedorContenido = document.getElementById("media-viewer-content");
@@ -496,19 +496,16 @@ window.abrirVisorSeguro = function(dataUrl, nombreArchivo, tipoMime) {
     contenedorContenido.innerHTML = "";
 
     if (tipoMime && tipoMime.includes("image")) {
-        // Renderizar imagen de manera segura en memoria con restricciones contra descarga y selección
         contenedorContenido.innerHTML = `
             <img src="${dataUrl}" alt="${nombreArchivo}" class="max-h-[75vh] max-w-full rounded shadow-lg object-contain mx-auto select-none pointer-events-none" />
             <p class="text-[10px] text-amber-400 text-center mt-2">🛡️ Modo Zero-Trace Activo: Imagen protegida contra descarga directa.</p>
         `;
     } else if (tipoMime && tipoMime.includes("pdf")) {
-        // Renderizar visor de PDF en memoria usando iframe seguro
         contenedorContenido.innerHTML = `
             <iframe src="${dataUrl}" class="w-full h-[70vh] rounded border border-slate-700 bg-slate-950" title="${nombreArchivo}"></iframe>
             <p class="text-[10px] text-amber-400 text-center mt-2">🛡️ Modo Zero-Trace Activo: Visualización de documento restringida a memoria.</p>
         `;
     } else {
-        // Para cualquier otro formato de documento compatible
         contenedorContenido.innerHTML = `
             <div class="text-center p-6 space-y-3">
                 <p class="text-3xl">📄</p>
@@ -522,7 +519,6 @@ window.abrirVisorSeguro = function(dataUrl, nombreArchivo, tipoMime) {
     modal.classList.remove("hidden");
 }
 
-// Cierra y limpia el visor seguro de la memoria
 window.cerrarVisorSeguro = function() {
     const modal = document.getElementById("media-viewer-modal");
     const contenedorContenido = document.getElementById("media-viewer-content");
